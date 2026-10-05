@@ -121,4 +121,4 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The workflow creates a GitHub Release with generated release notes. The first release can use `v0.1.0` if that is the intended initial version.
+The workflow creates a GitHub Release with generated release notes. Every published release builds and pushes a multi-architecture container to GHCR as `ghcr.io/fyksen/nametag-mcp:<version>` and `:latest`. The first release can use `v0.1.0` if that is the intended initial version. The `v0.1.0` GitHub Release predates the container workflow; publish its image once via **Actions → Publish container → Run workflow**, entering `v0.1.0`. The first GHCR package may be private by default; make it public in the package's **Package settings** if anonymous pulls are desired. The workflow can also be manually dispatched with any existing release tag.
