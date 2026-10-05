@@ -1,0 +1,31 @@
+services:
+  nametag-mcp:
+    image: ghcr.io/fyksen/nametag-mcp:0.1.0
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MCP_TRANSPORT: http
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "8765"
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-nametag-mcp.home.arpa}
+      MCP_TRUSTED_PROXY: "true"
+    expose:
+      - "8765"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - nametag-mcp
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

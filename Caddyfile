@@ -1,0 +1,4 @@
+nametag-mcp.home.arpa {
+    tls internal
+    reverse_proxy nametag-mcp:8765
+}
