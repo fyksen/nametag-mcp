@@ -1,0 +1,20 @@
+{
+  "name": "nametag-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server for Nametag personal relationship manager",
+  "scripts": {
+    "start": "node --env-file=.env src/index.js",
+    "test": "node --test",
+    "test:live": "node --env-file=.env --test test/live-nametag.test.js",
+    "test:write": "node --env-file=.env --test test/live-write.test.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "zod": "^4.1.13"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
