@@ -1,0 +1,61 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "enabledManagers": [
+    "npm",
+    "dockerfile",
+    "github-actions"
+  ],
+  "mode": "full",
+  "dependencyDashboard": true,
+  "dependencyDashboardApproval": false,
+  "prCreation": "immediate",
+  "automerge": true,
+  "automergeSchedule": ["at any time"],
+  "osvVulnerabilityAlerts": true,
+  "timezone": "UTC",
+  "schedule": ["at any time"],
+  "minimumReleaseAge": null,
+  "prConcurrentLimit": 3,
+  "platformAutomerge": false,
+  "automergeType": "pr",
+  "ignoreTests": false,
+  "pinDigests": true,
+  "rebaseWhen": "behind-base-branch",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "groupName": "Node.js dependencies"
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "groupName": "Docker base images"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "matchPackageNames": ["*"],
+      "dependencyDashboardApproval": false,
+      "automerge": true
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "dependencyDashboardApproval": false,
+    "automerge": true
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "minimumReleaseAge": null,
+    "dependencyDashboardApproval": false,
+    "automerge": true
+  }
+}

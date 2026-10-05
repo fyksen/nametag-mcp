@@ -2,17 +2,16 @@
 
 A stdio or remote Streamable HTTP MCP server that connects assistants to a Nametag instance through its REST API. It does not connect directly to PostgreSQL; Nametag remains responsible for data validation, permissions, and API-token scopes.
 
-## Local Nametag stack
+## Configuration
 
-From this directory, create `.env` from `.env.example`, replace the secrets, and set `NAMETAG_API_TOKEN` after creating a personal token in **Settings → API Tokens**:
+This MCP connects to an existing Nametag instance. It does not install or configure Nametag or PostgreSQL. Create a personal API token in Nametag under **Settings → API Tokens**, then copy the MCP-only example configuration:
 
 ```sh
 cp .env.example .env
-# Edit .env and replace all placeholder values.
-docker compose up -d
+# Edit .env: set NAMETAG_URL and NAMETAG_API_TOKEN.
 ```
 
-The Compose file runs PostgreSQL 16 Alpine and `ghcr.io/mattogodoy/nametag:0.63.0`. Nametag is available at `http://localhost:3000`; ports bind to localhost. Register the first Nametag account in the browser, then create an API token. API tokens are bearer credentials and should be kept private.
+Keep `.env` private; it is ignored by Git. `NAMETAG_URL` must be reachable from the MCP host/container. In Docker, `localhost` means the MCP container itself, so use the Nametag host's LAN address or DNS name.
 
 ## Run the MCP server
 
@@ -25,14 +24,14 @@ npm start
 
 The server reads `NAMETAG_URL` (defaults to `http://localhost:3000`) and `NAMETAG_API_TOKEN` from its environment. For a local stdio MCP client, configure command `node`, args `["--env-file=/absolute/path/to/nametag-mcp/.env", "/absolute/path/to/nametag-mcp/src/index.js"]`.
 
-Alternatively, run the MCP server in Docker after adding your token to `.env`:
+To run stdio mode in Docker:
 
 ```sh
-docker compose --profile mcp build mcp
-docker compose --profile mcp run --rm --no-deps mcp
+docker build -t nametag-mcp .
+docker run --rm -i --env-file .env nametag-mcp
 ```
 
-For an MCP client using the Docker option, use command `docker` and args `["compose", "--profile", "mcp", "run", "--rm", "--no-deps", "-T", "mcp"]` from this directory.
+Configure an MCP client with command `docker` and args `run`, `--rm`, `-i`, `--env-file`, the absolute `.env` path, and `nametag-mcp`.
 
 ## Remote MCP over the LAN
 
@@ -51,7 +50,7 @@ NAMETAG_URL=https://your-nametag-host.example.lan
 NAMETAG_API_TOKEN=ntag_<your-nametag-token>
 ```
 
-`MCP_TRUSTED_PROXY=true` is only for a TLS-terminating proxy on the same host. Keep the MCP port private; the supplied Compose configuration binds its published MCP port to `127.0.0.1` only. For example, Caddy can terminate TLS and forward requests:
+`MCP_TRUSTED_PROXY=true` is only for a TLS-terminating proxy on the same host. Keep the MCP port private. For example, Caddy can terminate TLS and forward requests:
 
 ```caddyfile
 mcp.example.lan {
@@ -62,7 +61,14 @@ mcp.example.lan {
 
 Configure Hermes with the MCP URL `https://mcp.example.lan/mcp` and `Authorization: Bearer <MCP_AUTH_TOKEN>`. Install/trust the reverse proxy's certificate authority on the Hermes host. `MCP_ALLOWED_HOSTS` is an exact Host-header allowlist; include the external hostname (and port if non-standard). Browser-based clients that send an `Origin` header must also be listed in `MCP_ALLOWED_ORIGINS`; requests with no Origin, as sent by native clients, are allowed.
 
-For the Compose MCP service, set `MCP_TRANSPORT=http`, `MCP_AUTH_TOKEN`, and `MCP_ALLOWED_HOSTS` in `.env`, set `MCP_NAMETAG_URL` to the Nametag URL reachable from that container, then start only the MCP service with `docker compose --profile mcp up -d mcp`. The host-side MCP listener remains on `127.0.0.1:8765` for the reverse proxy. This service no longer requires the local test Nametag/Postgres containers.
+For Docker HTTP mode, build the image and run it with the MCP port bound to loopback. Override `MCP_HOST` inside the container so Docker can forward the listener:
+
+```sh
+docker build -t nametag-mcp .
+docker run -d --name nametag-mcp --env-file .env \
+  -e MCP_TRANSPORT=http -e MCP_HOST=0.0.0.0 -e MCP_TRUSTED_PROXY=true \
+  -p 127.0.0.1:8765:8765 nametag-mcp
+```
 
 If you bind the HTTP server directly to a LAN interface instead of using a proxy, configure `MCP_TLS_CERT` and `MCP_TLS_KEY` for direct HTTPS. Cleartext non-loopback binding is refused unless `MCP_ALLOW_INSECURE_HTTP=true` is explicitly set; do not use that override for a real deployment.
 
@@ -103,3 +109,16 @@ docker run --rm nametag-mcp-test
 ```
 
 For a real Nametag integration check, set `NAMETAG_URL` and a dedicated test `NAMETAG_API_TOKEN`, then run the MCP tools against a non-production instance. Never point write tests at personal/production data without explicitly intending the changes.
+
+## Dependency updates and releases
+
+Renovate is configured in `renovate.json` for npm dependencies, Dockerfile base images, and GitHub Actions. Install/enable the Renovate GitHub App for this repository; its pull requests are grouped and automerged only after CI passes.
+
+Releases are created from version tags after the release workflow's tests pass. Keep `package.json`'s version aligned with the tag, then tag and push, for example:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The workflow creates a GitHub Release with generated release notes. The first release can use `v0.1.0` if that is the intended initial version.
